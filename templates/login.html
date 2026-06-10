@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Registre National des Bénéficiaires Effectifs</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'Inter', sans-serif; }
+
+.page {
+  display: flex;
+  min-height: 100vh;
+  background: #F0F4F8;
+}
+
+.panneau-gauche {
+  flex: 0 0 48%;
+  background: #1C3557;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem;
+}
+
+.panneau-gauche::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(212,166,60,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 10%, rgba(255,255,255,0.04) 0%, transparent 60%);
+}
+
+.motif-fond {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.015) 40px,
+    rgba(255,255,255,0.015) 41px
+  );
+}
+
+.entete-gauche {
+  position: relative;
+  z-index: 2;
+}
+
+.embleme {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #D4A63C, #F0C84A);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  color: #1C3557;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 24px rgba(212,166,60,0.3);
+}
+
+.titre-ministere {
+  font-family: 'Source Serif 4', serif;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.titre-principal {
+  font-family: 'Source Serif 4', serif;
+  font-size: 1.75rem;
+  color: #FFFFFF;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.titre-sous {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+}
+
+.corps-gauche {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.encart-info {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 1.75rem;
+  width: 100%;
+}
+
+.encart-info p {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.7;
+}
+
+.point-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.point-info:last-child { margin-bottom: 0; }
+
+.point-icone {
+  width: 32px;
+  height: 32px;
+  background: rgba(212,166,60,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #D4A63C;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.point-texte strong {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 2px;
+}
+
+.point-texte span {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.pied-gauche {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.drapeau {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  width: 54px;
+  height: 33px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+.drapeau-vert { flex: 1; background: #00853F; }
+.drapeau-jaune { flex: 1; background: #FDEF42; display: flex; align-items: center; justify-content: center; color: #00853F; font-size: 0.8rem; }
+.drapeau-rouge { flex: 1; background: #E31B23; }
+
+.devise {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.panneau-droit {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #F0F4F8;
+}
+
+.carte-connexion {
+  width: 100%;
+  max-width: 420px;
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 32px rgba(28,53,87,0.1);
+}
+
+.carte-connexion h2 {
+  font-family: 'Source Serif 4', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1C3557;
+  margin-bottom: 0.35rem;
+}
+
+.carte-connexion .sous-titre {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.separateur {
+  height: 3px;
+  width: 40px;
+  background: linear-gradient(90deg, #D4A63C, #F0C84A);
+  border-radius: 2px;
+  margin-bottom: 2rem;
+}
+
+.champ-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2D3748;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.groupe-champ {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.icone-champ {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #A0AEC0;
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.groupe-champ input {
+  width: 100%;
+  padding: 0.65rem 0.9rem 0.65rem 2.5rem;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  color: #2D3748;
+  background: #FAFAFA;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
+}
+
+.groupe-champ input:focus {
+  border-color: #1C3557;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(28,53,87,0.08);
+}
+
+.btn-oeil {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #A0AEC0;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.btn-connexion {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #1C3557, #2A4D7A);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+.btn-connexion:hover {
+  background: linear-gradient(135deg, #0F2340, #1C3557);
+  box-shadow: 0 4px 16px rgba(28,53,87,0.3);
+  transform: translateY(-1px);
+}
+
+.alerte {
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alerte-danger {
+  background: #FFF5F5;
+  color: #C53030;
+  border: 1px solid #FED7D7;
+}
+
+.pied-carte {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.78rem;
+  color: #A0AEC0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 768px) {
+  .panneau-gauche { display: none; }
+  .panneau-droit { background: #1C3557; }
+  .carte-connexion { box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="panneau-gauche">
+    <div class="motif-fond"></div>
+    <div class="entete-gauche">
+      <div class="embleme"><i class="fas fa-balance-scale"></i></div>
+      <div class="titre-ministere">République du Sénégal</div>
+      <h1 class="titre-principal">Ministère de la Justice<br>Garde des Sceaux</h1>
+      <p class="titre-sous">Registre National des Bénéficiaires Effectifs</p>
+    </div>
+
+    <div class="corps-gauche">
+      <div class="encart-info">
+        <div class="point-info">
+          <div class="point-icone"><i class="fas fa-shield-alt"></i></div>
+          <div class="point-texte">
+            <strong>Accès sécurisé</strong>
+            <span>Connexion chiffrée et authentification protégée</span>
+          </div>
+        </div>
+        <div class="point-info">
+          <div class="point-icone"><i class="fas fa-file-alt"></i></div>
+          <div class="point-texte">
+            <strong>Déclarations en ligne</strong>
+            <span>Saisie et suivi des bénéficiaires effectifs</span>
+          </div>
+        </div>
+        <div class="point-info">
+          <div class="point-icone"><i class="fas fa-lock"></i></div>
+          <div class="point-texte">
+            <strong>Données confidentielles</strong>
+            <span>Conforme aux exigences légales en vigueur</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pied-gauche">
+      <div class="drapeau">
+        <div class="drapeau-vert"></div>
+        <div class="drapeau-jaune"><i class="fas fa-star"></i></div>
+        <div class="drapeau-rouge"></div>
+      </div>
+      <span class="devise">Un Peuple &mdash; Un But &mdash; Une Foi</span>
+    </div>
+  </div>
+
+  <div class="panneau-droit">
+    <div class="carte-connexion">
+      <h2>Connexion</h2>
+      <p class="sous-titre">Accédez à votre espace de déclaration</p>
+      <div class="separateur"></div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="alerte alerte-{{ cat }}">
+          <i class="fas fa-exclamation-circle"></i>
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="{{ url_for('login') }}">
+        <label class="champ-label">Adresse email</label>
+        <div class="groupe-champ">
+          <i class="fas fa-envelope icone-champ"></i>
+          <input type="email" name="email" placeholder="votre@email.sn" required autofocus>
+        </div>
+
+        <label class="champ-label">Mot de passe</label>
+        <div class="groupe-champ">
+          <i class="fas fa-lock icone-champ"></i>
+          <input type="password" name="password" id="mdp" placeholder="Votre mot de passe" required>
+          <button type="button" class="btn-oeil" onclick="basculeOeil()">
+            <i class="fas fa-eye" id="icone-oeil"></i>
+          </button>
+        </div>
+
+        <button type="submit" class="btn-connexion">
+          <i class="fas fa-sign-in-alt"></i>
+          Se connecter
+        </button>
+      </form>
+
+      <div class="pied-carte">
+        <i class="fas fa-shield-alt"></i>
+        Connexion sécurisée
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+function basculeOeil() {
+  const champ = document.getElementById('mdp');
+  const icone = document.getElementById('icone-oeil');
+  if (champ.type === 'password') {
+    champ.type = 'text';
+    icone.className = 'fas fa-eye-slash';
+  } else {
+    champ.type = 'password';
+    icone.className = 'fas fa-eye';
+  }
+}
+</script>
+</body>
+</html>

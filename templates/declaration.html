@@ -1,0 +1,628 @@
+{% extends "base.html" %}
+{% block titre %}{% if edit %}Modifier{% else %}Nouvelle{% endif %} Déclaration{% endblock %}
+
+{% block contenu %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="entete-page mb-3">
+    <div class="d-flex align-items-center gap-3">
+      <a href="{{ url_for('liste_declarations') }}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Retour
+      </a>
+      <div>
+        <h1 class="titre-page">
+          <i class="fas fa-{% if edit %}edit{% else %}plus-circle{% endif %} me-2"></i>
+          {% if edit %}Modifier la déclaration{% else %}Nouvelle déclaration{% endif %}
+        </h1>
+        <p class="sous-titre-page">Déclaration de Bénéficiaire Effectif &mdash; Ministère de la Justice</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="etapes-form">
+    <div class="etape active" data-e="1"><span class="etape-num">A</span><span class="etape-libelle">Entité déclarante</span></div>
+    <div class="etape-trait"></div>
+    <div class="etape" data-e="2"><span class="etape-num">B</span><span class="etape-libelle">Bénéficiaire</span></div>
+    <div class="etape-trait"></div>
+    <div class="etape" data-e="3"><span class="etape-num">C</span><span class="etape-libelle">Participation</span></div>
+    <div class="etape-trait"></div>
+    <div class="etape" data-e="4"><span class="etape-num">D</span><span class="etape-libelle">Documents</span></div>
+    <div class="etape-trait"></div>
+    <div class="etape" data-e="5"><span class="etape-num">E</span><span class="etape-libelle">Certification</span></div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="formDeclaration" novalidate>
+
+    <!-- SECTION A -->
+    <div class="section-form active" id="sec-1">
+      <div class="carte">
+        <div class="carte-corps">
+          <div class="en-tete-section">
+            <div class="badge-section">A</div>
+            <div>
+              <h3 class="titre-section">Informations relatives à l'entité déclarante</h3>
+              <p class="desc-section">Identité et coordonnées de la société</p>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-5">
+              <label class="form-label requis">Dénomination Sociale</label>
+              <input type="text" name="denomination_sociale" class="form-control" required
+                     value="{{ d.denomination_sociale if d else '' }}" placeholder="Nom complet de la société">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label requis">NINEA</label>
+              <input type="text" name="ninea" id="ninea" class="form-control" required
+                     value="{{ d.ninea if d else '' }}" placeholder="Ex. 0043385142U2">
+              <div id="retour-ninea" class="small mt-1"></div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Numéro RCCM</label>
+              <input type="text" name="rccm" class="form-control"
+                     value="{{ d.rccm if d else '' }}" placeholder="SN.DKR.XXXX.B.XXXX">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label requis">Forme Juridique</label>
+              <select name="forme_juridique" class="form-select" required>
+                <option value="">Sélectionner</option>
+                {% for f in ['SA','SARL','SUARL','SNC','SCS','GIE','Coopérative','Association','ONG','Autre','Non renseigné'] %}
+                <option value="{{ f }}" {% if d and d.forme_juridique == f %}selected{% endif %}>{{ f }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Région</label>
+              <select name="region" class="form-select">
+                <option value="">Sélectionner</option>
+                {% for r in ['Dakar','Thiès','Diourbel','Fatick','Kaolack','Kaffrine','Louga','Saint-Louis','Matam','Tambacounda','Kédougou','Kolda','Sédhiou','Ziguinchor','Autre','Non renseigné'] %}
+                <option value="{{ r }}" {% if d and d.region == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Pays / État</label>
+              <input type="text" name="pays" class="form-control" value="{{ d.pays if d else 'SÉNÉGAL' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Ville</label>
+              <input type="text" name="ville" class="form-control" value="{{ d.ville if d else '' }}" placeholder="Ex. Dakar">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Siège social / Adresse</label>
+              <input type="text" name="adresse" class="form-control" value="{{ d.adresse if d else '' }}" placeholder="Adresse complète">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Téléphone</label>
+              <input type="tel" name="telephone" class="form-control" value="{{ d.telephone if d else '' }}" placeholder="+221 XX XXX XX XX">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email_entreprise" class="form-control" value="{{ d.email_entreprise if d else '' }}" placeholder="contact@societe.sn">
+            </div>
+          </div>
+
+          <div class="bloc-interne mt-3">
+            <div class="titre-bloc"><i class="fas fa-chart-line me-2"></i>Statut de l'entité</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Entreprise non cotée en bourse ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.cotee_bourse == opt %}selectionne{% endif %}">
+                    <input type="radio" name="cotee_bourse" value="{{ opt }}" {% if d and d.cotee_bourse == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cotée ou filiale d'une entreprise cotée ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.filiale_cotee == opt %}selectionne{% endif %}">
+                    <input type="radio" name="filiale_cotee" value="{{ opt }}" data-affiche="champs-bourse" {% if d and d.filiale_cotee == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Entreprise d'État ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.entreprise_etat == opt %}selectionne{% endif %}">
+                    <input type="radio" name="entreprise_etat" value="{{ opt }}" {% if d and d.entreprise_etat == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Autre type d'entité ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.autre_entite == opt %}selectionne{% endif %}">
+                    <input type="radio" name="autre_entite" value="{{ opt }}" {% if d and d.autre_entite == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div id="champs-bourse" class="champs-cond {% if not d or d.filiale_cotee != 'Oui' %}d-none{% endif %} mt-3">
+              <div class="banniere-cond"><i class="fas fa-info-circle me-2"></i>Informations relatives à la cotation en bourse</div>
+              <div class="contenu-cond">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Nom de la maison mère cotée</label>
+                    <input type="text" name="nom_maison_mere" class="form-control" value="{{ d.nom_maison_mere if d else '' }}">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Place boursière</label>
+                    <input type="text" name="place_boursiere" class="form-control" value="{{ d.place_boursiere if d else '' }}">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Numéro ISIN / Stock ISIN</label>
+                    <input type="text" name="numero_isin" class="form-control" value="{{ d.numero_isin if d else '' }}">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Pourcentage de participation (%)</label>
+                    <input type="number" name="pourcentage_participation_mere" class="form-control" min="0" max="100" step="0.01" value="{{ d.pourcentage_participation_mere if d else '' }}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-3">
+        <button type="button" class="btn-primaire btn-suivant" data-cible="2">
+          Suivant : Bénéficiaire <i class="fas fa-arrow-right ms-2"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION B -->
+    <div class="section-form" id="sec-2">
+      <div class="carte">
+        <div class="carte-corps">
+          <div class="en-tete-section">
+            <div class="badge-section">B</div>
+            <div>
+              <h3 class="titre-section">Informations sur le Bénéficiaire Effectif</h3>
+              <p class="desc-section">Identité et statut de la personne physique concernée</p>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label requis">Nom complet (Identité)</label>
+              <input type="text" name="nom_beneficiaire" class="form-control" required value="{{ d.nom_beneficiaire if d else '' }}" placeholder="NOM DE FAMILLE">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label requis">Prénom(s)</label>
+              <input type="text" name="prenom_beneficiaire" class="form-control" required value="{{ d.prenom_beneficiaire if d else '' }}" placeholder="Prénom(s)">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Sexe</label>
+              <select name="sexe" class="form-select">
+                <option value="">Sélectionner</option>
+                <option value="Masculin" {% if d and d.sexe == 'Masculin' %}selected{% endif %}>Masculin</option>
+                <option value="Féminin" {% if d and d.sexe == 'Féminin' %}selected{% endif %}>Féminin</option>
+                <option value="Non renseigné">Non renseigné</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Date de naissance</label>
+              <input type="date" name="date_naissance" class="form-control" value="{{ d.date_naissance if d else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Lieu de naissance</label>
+              <input type="text" name="lieu_naissance" class="form-control" value="{{ d.lieu_naissance if d else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Nationalité(s)</label>
+              <input type="text" name="nationalite" class="form-control" value="{{ d.nationalite if d else '' }}" placeholder="Ex. SÉNÉGALAISE">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Pays de résidence</label>
+              <input type="text" name="pays_residence" class="form-control" value="{{ d.pays_residence if d else '' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">N° CNI / Passeport</label>
+              <input type="text" name="numero_cni" class="form-control" value="{{ d.numero_cni if d else '' }}" placeholder="Numéro du document">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Adresse personnelle</label>
+              <input type="text" name="adresse_personnelle" class="form-control" value="{{ d.adresse_personnelle if d else '' }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Adresse professionnelle</label>
+              <input type="text" name="adresse_professionnelle" class="form-control" value="{{ d.adresse_professionnelle if d else '' }}">
+            </div>
+          </div>
+
+          <div class="bloc-interne mt-3">
+            <div class="titre-bloc"><i class="fas fa-user-tie me-2"></i>Personne Politiquement Exposée (PPE)</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Êtes-vous une Personne Politiquement Exposée (PPE) ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.ppe == opt %}selectionne{% endif %} {% if opt == 'Oui' %}danger{% endif %}">
+                    <input type="radio" name="ppe" value="{{ opt }}" data-affiche="champs-ppe" {% if d and d.ppe == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Êtes-vous en relation avec une PPE ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.relation_ppe == opt %}selectionne{% endif %}">
+                    <input type="radio" name="relation_ppe" value="{{ opt }}" {% if d and d.relation_ppe == opt %}checked{% elif not d and opt == 'Non' %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div id="champs-ppe" class="champs-cond {% if not d or d.ppe != 'Oui' %}d-none{% endif %} mt-3">
+              <div class="banniere-cond danger"><i class="fas fa-exclamation-triangle me-2"></i>Informations PPE requises</div>
+              <div class="contenu-cond">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Fonction PPE</label>
+                    <input type="text" name="fonction_ppe" class="form-control" value="{{ d.fonction_ppe if d else '' }}" placeholder="Ex. Ministre, Député...">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Catégorie PPE</label>
+                    <select name="categorie_ppe" class="form-select">
+                      <option value="">Sélectionner</option>
+                      <option value="PPE nationale" {% if d and d.categorie_ppe == 'PPE nationale' %}selected{% endif %}>PPE nationale</option>
+                      <option value="PPE étrangère" {% if d and d.categorie_ppe == 'PPE étrangère' %}selected{% endif %}>PPE étrangère</option>
+                      <option value="PPE organisation internationale" {% if d and d.categorie_ppe == 'PPE organisation internationale' %}selected{% endif %}>PPE organisation internationale</option>
+                      <option value="Non renseigné">Non renseigné</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Début de fonction</label>
+                    <input type="date" name="date_debut_fonction" class="form-control" value="{{ d.date_debut_fonction if d else '' }}">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Fin de fonction</label>
+                    <input type="date" name="date_fin_fonction" class="form-control" value="{{ d.date_fin_fonction if d else '' }}">
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Nature de la relation avec la PPE</label>
+                    <textarea name="nature_relation_ppe" class="form-control" rows="2">{{ d.nature_relation_ppe if d else '' }}</textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-precedent" data-cible="1"><i class="fas fa-arrow-left me-2"></i>Précédent</button>
+        <button type="button" class="btn-primaire btn-suivant" data-cible="3">Suivant : Participation <i class="fas fa-arrow-right ms-2"></i></button>
+      </div>
+    </div>
+
+    <!-- SECTION C -->
+    <div class="section-form" id="sec-3">
+      <div class="carte">
+        <div class="carte-corps">
+          <div class="en-tete-section">
+            <div class="badge-section">C</div>
+            <div>
+              <h3 class="titre-section">Participation et Contrôle</h3>
+              <p class="desc-section">Mode de détention de la propriété et exercice du contrôle sur la société</p>
+            </div>
+          </div>
+
+          <div class="bloc-interne">
+            <div class="titre-bloc"><i class="fas fa-share-alt me-2"></i>Parts sociales directes d'au moins 2%</div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Parts directes ≥ 2% ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.parts_directes == opt %}selectionne{% endif %}">
+                    <input type="radio" name="parts_directes" value="{{ opt }}" {% if d and d.parts_directes == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Nombre de parts</label>
+                <input type="number" name="nombre_parts_directes" class="form-control" min="0" value="{{ d.nombre_parts_directes if d else '' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Pourcentage de participation (%)</label>
+                <input type="number" name="pourcentage_participation" class="form-control" min="0" max="100" step="0.01" value="{{ d.pourcentage_participation if d else '' }}" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+
+          <div class="bloc-interne mt-3">
+            <div class="titre-bloc"><i class="fas fa-vote-yea me-2"></i>Droits de vote directs</div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Droits de vote directs ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.droits_vote_directs == opt %}selectionne{% endif %}">
+                    <input type="radio" name="droits_vote_directs" value="{{ opt }}" {% if d and d.droits_vote_directs == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Nombre de voix</label>
+                <input type="number" name="nombre_voix" class="form-control" min="0" value="{{ d.nombre_voix if d else '' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Pourcentage des voix (%)</label>
+                <input type="number" name="pourcentage_voix" class="form-control" min="0" max="100" step="0.01" value="{{ d.pourcentage_voix if d else '' }}" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+
+          <div class="bloc-interne mt-3">
+            <div class="titre-bloc"><i class="fas fa-project-diagram me-2"></i>Parts sociales indirectes d'au moins 2%</div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Parts indirectes ≥ 2% ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.parts_indirectes == opt %}selectionne{% endif %}">
+                    <input type="radio" name="parts_indirectes" value="{{ opt }}" {% if d and d.parts_indirectes == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Nombre de parts indirectes</label>
+                <input type="number" name="nombre_parts_indirectes" class="form-control" min="0" value="{{ d.nombre_parts_indirectes if d else '' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Participation indirecte (%)</label>
+                <input type="number" name="pourcentage_participation_indirecte" class="form-control" min="0" max="100" step="0.01" value="{{ d.pourcentage_participation_indirecte if d else '' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Droits de vote indirects ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.droits_vote_indirects == opt %}selectionne{% endif %}">
+                    <input type="radio" name="droits_vote_indirects" value="{{ opt }}" {% if d and d.droits_vote_indirects == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bloc-interne mt-3">
+            <div class="titre-bloc"><i class="fas fa-gavel me-2"></i>Représentation et contrôle légal</div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Le bénéficiaire est-il le représentant légal ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.representant_legal == opt %}selectionne{% endif %}">
+                    <input type="radio" name="representant_legal" value="{{ opt }}" {% if d and d.representant_legal == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Date d'acquisition de la propriété</label>
+                <input type="date" name="date_beneficiaire" class="form-control" value="{{ d.date_beneficiaire if d else '' }}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Autres bénéficiaires effectifs (personnes physiques) ?</label>
+                <div class="groupe-radio">
+                  {% for opt in ['Oui','Non','Non renseigné'] %}
+                  <label class="option-radio {% if d and d.autres_beneficiaires == opt %}selectionne{% endif %}">
+                    <input type="radio" name="autres_beneficiaires" value="{{ opt }}" {% if d and d.autres_beneficiaires == opt %}checked{% endif %}>{{ opt }}
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-precedent" data-cible="2"><i class="fas fa-arrow-left me-2"></i>Précédent</button>
+        <button type="button" class="btn-primaire btn-suivant" data-cible="4">Suivant : Documents <i class="fas fa-arrow-right ms-2"></i></button>
+      </div>
+    </div>
+
+    <!-- SECTION D -->
+    <div class="section-form" id="sec-4">
+      <div class="carte">
+        <div class="carte-corps">
+          <div class="en-tete-section">
+            <div class="badge-section">D</div>
+            <div>
+              <h3 class="titre-section">Documents Justificatifs</h3>
+              <p class="desc-section">Pièces à joindre (PDF, ZIP, DOCX, XLSX &mdash; taille maximale 100 Mo)</p>
+            </div>
+          </div>
+
+          <div class="zone-depot" id="zoneDepot">
+            <input type="file" name="documents" id="champFichiers" multiple accept=".pdf,.zip,.docx,.xlsx" class="d-none">
+            <div class="icone"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h5 style="font-size:1rem; color:#1C3557">Déposez vos fichiers ici ou cliquez pour sélectionner</h5>
+            <p class="text-muted mt-1" style="font-size:0.85rem">Formats acceptés : PDF, ZIP, DOCX, XLSX</p>
+            <button type="button" class="btn btn-outline-primary mt-2" onclick="document.getElementById('champFichiers').click()">
+              <i class="fas fa-folder-open me-2"></i>Parcourir
+            </button>
+          </div>
+
+          <div id="listeFichiers" class="mt-3"></div>
+
+          {% if fichiers %}
+          <div class="mt-3 p-3 rounded" style="background:#F8FAFC; border:1px solid #E2E8F0">
+            <p class="fw-bold mb-2" style="font-size:0.85rem; color:#1C3557">Fichiers déjà joints :</p>
+            {% for f in fichiers %}
+            {% if f is mapping %}
+            <div class="element-fichier mb-1">
+              <i class="fas fa-file text-primary me-1"></i>
+              <a href="{{ url_for('voir_fichier', decl_id=d.id, filename=f.path) }}" target="_blank">{{ f.nom }}</a>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label">Lien Drive (Google Drive / OneDrive)</label>
+            <input type="url" name="lien_drive" class="form-control" value="{{ d.lien_drive if d else '' }}" placeholder="https://drive.google.com/...">
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-precedent" data-cible="3"><i class="fas fa-arrow-left me-2"></i>Précédent</button>
+        <button type="button" class="btn-primaire btn-suivant" data-cible="5">Suivant : Certification <i class="fas fa-arrow-right ms-2"></i></button>
+      </div>
+    </div>
+
+    <!-- SECTION E -->
+    <div class="section-form" id="sec-5">
+      <div class="carte">
+        <div class="carte-corps">
+          <div class="en-tete-section">
+            <div class="badge-section">E</div>
+            <div>
+              <h3 class="titre-section">Certification Complète</h3>
+              <p class="desc-section">Attestation et identification du signataire</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded" style="background:#EBF8FF; border:1px solid #BEE3F8">
+            <p class="text-muted mb-3" style="font-size:0.875rem">
+              <i class="fas fa-info-circle me-2 text-primary"></i>
+              Je soussigné(e), certifie que les informations contenues dans la présente déclaration sont exactes et complètes, conformément aux dispositions légales en vigueur en République du Sénégal.
+            </p>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label requis">Certification faite par</label>
+                <input type="text" name="certifie_par" class="form-control" required value="{{ d.certifie_par if d else '' }}" placeholder="NOM Prénom du signataire">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label requis">Fonction</label>
+                <input type="text" name="fonction_certifiant" class="form-control" required value="{{ d.fonction_certifiant if d else '' }}" placeholder="Ex. Gérant, Directeur Général...">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-precedent" data-cible="4"><i class="fas fa-arrow-left me-2"></i>Précédent</button>
+        <button type="submit" class="btn btn-success px-5" style="font-size:0.95rem; font-weight:700; padding:0.65rem 2rem; border-radius:8px">
+          <i class="fas fa-paper-plane me-2"></i>
+          {% if edit %}Enregistrer les modifications{% else %}Soumettre la déclaration{% endif %}
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block js_extra %}
+<script>
+// Navigation par étapes
+function afficherSection(n) {
+  document.querySelectorAll('.section-form').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.etape').forEach((e, i) => {
+    e.classList.toggle('active', i + 1 === n);
+    e.classList.toggle('finie', i + 1 < n);
+  });
+  document.getElementById(`sec-${n}`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.btn-suivant').forEach(b => {
+  b.addEventListener('click', () => afficherSection(+b.dataset.cible));
+});
+document.querySelectorAll('.btn-precedent').forEach(b => {
+  b.addEventListener('click', () => afficherSection(+b.dataset.cible));
+});
+
+// Champs conditionnels
+document.querySelectorAll('input[data-affiche]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const cible = document.getElementById(radio.dataset.affiche);
+    if (cible) cible.classList.toggle('d-none', radio.value !== 'Oui');
+  });
+});
+
+// Style des radios
+document.querySelectorAll('.option-radio input').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll(`input[name="${radio.name}"]`).forEach(r => {
+      r.closest('.option-radio').classList.toggle('selectionne', r.checked);
+    });
+  });
+});
+
+// Zone de dépôt de fichiers
+const zone = document.getElementById('zoneDepot');
+const champFichiers = document.getElementById('champFichiers');
+const listeFichiers = document.getElementById('listeFichiers');
+
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('survol'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('survol'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('survol');
+  const dt = new DataTransfer();
+  [...e.dataTransfer.files, ...(champFichiers.files || [])].forEach(f => dt.items.add(f));
+  champFichiers.files = dt.files;
+  afficherListeFichiers();
+});
+champFichiers.addEventListener('change', afficherListeFichiers);
+
+function afficherListeFichiers() {
+  listeFichiers.innerHTML = '';
+  const icons = { pdf: 'fa-file-pdf text-danger', zip: 'fa-file-archive text-warning', docx: 'fa-file-word text-primary', xlsx: 'fa-file-excel text-success' };
+  [...champFichiers.files].forEach(f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    const taille = (f.size / 1024 / 1024).toFixed(2);
+    listeFichiers.innerHTML += `<div class="element-fichier">
+      <i class="fas ${icons[ext] || 'fa-file text-muted'} me-2"></i>
+      <span class="flex-grow-1">${f.name}</span>
+      <span class="badge bg-secondary">${taille} Mo</span>
+    </div>`;
+  });
+}
+
+// Validation NINEA
+const inputNinea = document.getElementById('ninea');
+if (inputNinea) {
+  let timer;
+  inputNinea.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (inputNinea.value.length >= 5) {
+        fetch('/api/validate/ninea', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ninea: inputNinea.value })
+        }).then(r => r.json()).then(data => {
+          const fb = document.getElementById('retour-ninea');
+          if (!data.valid) {
+            fb.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>${data.message}</span>`;
+          } else {
+            fb.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>NINEA disponible</span>`;
+          }
+        });
+      }
+    }, 600);
+  });
+}
+</script>
+{% endblock %}
