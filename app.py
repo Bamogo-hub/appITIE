@@ -17,6 +17,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
+# Ensure the uploads directory exists at startup so file operations never fail
+# because the directory is missing.
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
@@ -608,14 +612,33 @@ def export_to_excel():
 
 
 def init_db():
-    with app.app_context():
-        db.create_all()
-        if not User.query.filter_by(role='admin').first():
-            hashed = bcrypt.generate_password_hash('changez_ce_mot_de_passe').decode('utf-8')
-            admin_user = User(nom='Administrateur', prenom='Système',
-                              email='admin@rne.justice.sn', password=hashed, role='admin')
-            db.session.add(admin_user)
-            db.session.commit()
+    """Create database tables and seed the default admin account if needed.
+
+    This function is safe to call multiple times — it only creates tables that
+    do not already exist and only inserts the admin user when no admin account
+    is present yet.  All errors are caught so that a transient failure (e.g.
+    a missing directory or a locked file) never prevents Gunicorn from
+    importing the module.
+    """
+    try:
+        with app.app_context():
+            db.create_all()
+            if not User.query.filter_by(role='admin').first():
+                hashed = bcrypt.generate_password_hash('changez_ce_mot_de_passe').decode('utf-8')
+                admin_user = User(
+                    nom='Administrateur',
+                    prenom='Système',
+                    email='admin@rne.justice.sn',
+                    password=hashed,
+                    role='admin',
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+    except Exception as e:
+        # Log the error but do not re-raise — a failure here must not prevent
+        # Gunicorn from loading the application.
+        import sys
+        print(f"[init_db] Warning: database initialisation failed: {e}", file=sys.stderr)
 
 
 # Filtre Jinja personnalisé
@@ -629,4 +652,30 @@ def from_json_filter(value):
     except Exception:
         return []
 
-init_db()
+
+# ---------------------------------------------------------------------------
+# Application startup
+# ---------------------------------------------------------------------------
+
+# Attempt to initialise the database at import time so that a freshly deployed
+# container is ready to serve requests immediately.  The call is wrapped in a
+# try/except so that any failure (permissions, missing path, …) is logged but
+# never causes Gunicorn to abort the import.
+try:
+    init_db()
+except Exception as _e:
+    import sys
+    print(f"[startup] Warning: init_db() raised an unexpected exception: {_e}", file=sys.stderr)
+
+
+# Belt-and-suspenders: if the module-scope call above was skipped or failed,
+# retry once on the very first HTTP request so the app becomes functional as
+# soon as the environment is ready (e.g. after a volume is mounted).
+_db_initialised = False
+
+@app.before_request
+def ensure_db_initialised():
+    global _db_initialised
+    if not _db_initialised:
+        init_db()
+        _db_initialised = True
